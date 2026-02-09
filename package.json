@@ -1,0 +1,110 @@
+{
+  "name": "model-hopper",
+  "displayName": "Model Hopper",
+  "description": "Intelligently switches AI providers based on quota availability.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:modelHopper.manualOverride",
+    "onCommand:modelHopper.testRequest"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "modelHopper.manualOverride",
+        "title": "Model Hopper: Manual Provider Override"
+      },
+      {
+        "command": "modelHopper.testRequest",
+        "title": "Model Hopper: Test Request"
+      },
+      {
+        "command": "modelHopper.openConfig",
+        "title": "Model Hopper: Open Config File"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "modelHopper.manualOverride",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorTextFocus"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "modelHopper",
+          "title": "Model Hopper",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "modelHopper": [
+        {
+          "id": "modelHopper.quotaView",
+          "name": "Provider Quotas"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Model Hopper",
+      "properties": {
+        "modelHopper.configPath": {
+          "type": "string",
+          "default": ".model-hopper.json",
+          "description": "Path to the Model Hopper config file (workspace-relative)."
+        },
+        "modelHopper.useConfigFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to load settings from the config file."
+        },
+        "modelHopper.defaultProvider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "anthropic", "gemini"],
+          "description": "Preferred provider if no priority order is set."
+        },
+        "modelHopper.alertThresholdPercent": {
+          "type": "number",
+          "default": 80,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Default quota threshold percent for auto-switch."
+        },
+        "modelHopper.quotaRefreshMinutes": {
+          "type": "number",
+          "default": 60,
+          "minimum": 1,
+          "description": "Default quota refresh interval in minutes."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p .",
+    "build": "npm run compile",
+    "watch": "tsc -watch -p ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.25.0",
+    "@google/generative-ai": "^0.22.0",
+    "openai": "^4.74.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.87.0",
+    "typescript": "^5.4.0"
+  }
+}
