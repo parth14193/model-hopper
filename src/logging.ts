@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export class Logger {
+export class Logger implements vscode.Disposable {
   private channel: vscode.OutputChannel;
 
   constructor() {
@@ -21,5 +21,9 @@ export class Logger {
 
   show() {
     this.channel.show();
+  }
+
+  dispose() {
+    this.channel.dispose();
   }
 }

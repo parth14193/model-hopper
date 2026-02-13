@@ -18,23 +18,33 @@ export class QuotaViewProvider implements vscode.TreeDataProvider<QuotaItem> {
   getChildren(): Thenable<QuotaItem[]> {
     const items: QuotaItem[] = [];
     for (const provider of this.providers.values()) {
-      items.push(new QuotaItem(provider.displayName, provider.getQuotaState()));
+      items.push(
+        new QuotaItem(provider.displayName, provider.getQuotaState(), provider.isConfigured())
+      );
     }
     return Promise.resolve(items);
   }
 }
 
 class QuotaItem extends vscode.TreeItem {
-  constructor(label: string, state?: QuotaState) {
+  constructor(label: string, state?: QuotaState, isConfigured = true) {
     super(label, vscode.TreeItemCollapsibleState.None);
-    this.description = state
-      ? `${state.usedPercent}% used`
-      : "Unknown";
+    this.contextValue = "quotaItem";
+    if (!isConfigured) {
+      this.description = "Not configured";
+      this.tooltip = "API key is not configured.";
+      return;
+    }
+
+    this.description = state ? `${state.usedPercent}% used` : "Unknown";
     this.tooltip = state?.lastError
       ? `Last error: ${state.lastError}`
       : state?.resetAt
-      ? `Resets at ${new Date(state.resetAt).toLocaleTimeString()}`
-      : undefined;
-    this.contextValue = "quotaItem";
+        ? `Resets at ${new Date(state.resetAt).toLocaleTimeString()}`
+        : "No recent requests.";
+
+    if (state?.authFailed) {
+      this.description = `${this.description} | Auth failed`;
+    }
   }
 }

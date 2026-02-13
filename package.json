@@ -13,7 +13,9 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:modelHopper.manualOverride",
-    "onCommand:modelHopper.testRequest"
+    "onCommand:modelHopper.testRequest",
+    "onCommand:modelHopper.refreshProviders",
+    "onCommand:modelHopper.showLogs"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -29,6 +31,14 @@
       {
         "command": "modelHopper.openConfig",
         "title": "Model Hopper: Open Config File"
+      },
+      {
+        "command": "modelHopper.refreshProviders",
+        "title": "Model Hopper: Refresh Providers"
+      },
+      {
+        "command": "modelHopper.showLogs",
+        "title": "Model Hopper: Show Logs"
       }
     ],
     "keybindings": [

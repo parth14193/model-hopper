@@ -38,15 +38,18 @@ export class ConfigManager {
       }
     }
 
-    const alertThresholdPercent =
+    const alertThresholdPercent = normalizePercent(
       fileConfig.alertThresholdPercent ??
-      config.get<number>("alertThresholdPercent", 80);
+        config.get<number>("alertThresholdPercent", 80)
+    );
 
-    const quotaRefreshMinutes =
+    const quotaRefreshMinutes = normalizePositiveInteger(
       fileConfig.quotaRefreshMinutes ??
-      config.get<number>("quotaRefreshMinutes", 60);
+        config.get<number>("quotaRefreshMinutes", 60),
+      60
+    );
 
-    const priorityOrder = fileConfig.priorityOrder ?? DEFAULT_PRIORITY;
+    const priorityOrder = normalizePriority(fileConfig.priorityOrder ?? DEFAULT_PRIORITY);
 
     const providers: Record<ProviderId, ProviderConfig> = {
       openai: fileConfig.providers?.openai ?? {},
@@ -71,4 +74,30 @@ export class ConfigManager {
 
     return this.cached;
   }
+}
+
+function normalizePriority(priority: ProviderId[]): ProviderId[] {
+  const unique: ProviderId[] = [];
+  for (const id of priority) {
+    if (DEFAULT_PRIORITY.includes(id) && !unique.includes(id)) {
+      unique.push(id);
+    }
+  }
+  for (const id of DEFAULT_PRIORITY) {
+    if (!unique.includes(id)) {
+      unique.push(id);
+    }
+  }
+  return unique;
+}
+
+function normalizePercent(value: number): number {
+  return Math.min(100, Math.max(1, Math.round(value)));
+}
+
+function normalizePositiveInteger(value: number, fallback: number): number {
+  if (!Number.isFinite(value) || value < 1) {
+    return fallback;
+  }
+  return Math.round(value);
 }

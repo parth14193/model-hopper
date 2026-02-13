@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const providers = new Map<ProviderId, ProviderClient>();
   let router = new ProviderRouter(providers, logger);
   const quotaView = new QuotaViewProvider(providers);
-  vscode.window.registerTreeDataProvider("modelHopper.quotaView", quotaView);
+  context.subscriptions.push(vscode.window.registerTreeDataProvider("modelHopper.quotaView", quotaView));
 
   const loadProviders = async () => {
     const config = await configManager.load();
@@ -51,6 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     router = new ProviderRouter(providers, logger);
+    statusBar.setManualOverride(context.globalState.get<ProviderId | undefined>(OVERRIDE_KEY));
     quotaView.refresh();
   };
 
@@ -79,12 +80,27 @@ export async function activate(context: vscode.ExtensionContext) {
         return;
       }
       await context.globalState.update(OVERRIDE_KEY, pick.id);
+      statusBar.setManualOverride(pick.id);
       if (pick.id) {
         logger.info(`Manual override set to ${pick.id}.`);
       } else {
         logger.info("Manual override cleared.");
       }
       quotaView.refresh();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("modelHopper.refreshProviders", async () => {
+      await loadProviders();
+      logger.info("Providers reloaded from configuration.");
+      vscode.window.showInformationMessage("Model Hopper providers refreshed.");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("modelHopper.showLogs", () => {
+      logger.show();
     })
   );
 
@@ -149,6 +165,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(statusBar);
+  context.subscriptions.push(logger);
   logger.info("Model Hopper activated.");
 }
 
