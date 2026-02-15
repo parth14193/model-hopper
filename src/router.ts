@@ -33,7 +33,26 @@ export class ProviderRouter {
         continue;
       }
 
-      const quota = await provider.checkQuota();
+      let quota: QuotaState;
+      try {
+        quota = await provider.checkQuota();
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        lastError = error;
+        provider.setQuotaState({
+          lastUpdated: Date.now(),
+          usedPercent: 100,
+          remainingPercent: 0,
+          lastError: `Quota check failed: ${error.message}`
+        });
+        this.logger.warn(`${provider.displayName} quota check failed: ${error.message}`);
+        const next = this.nextProvider(ordered, id);
+        if (next && options.onAutoSwitch) {
+          options.onAutoSwitch(id, next);
+        }
+        continue;
+      }
+
       if (this.isQuotaExceeded(quota, options.alertThresholdPercent)) {
         this.logger.warn(`${provider.displayName} quota exceeded. Skipping.`);
         const next = this.nextProvider(ordered, id);
