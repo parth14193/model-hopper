@@ -8,6 +8,7 @@ import { GeminiProvider } from "./providers/gemini";
 import { OpenAIProvider } from "./providers/openai";
 import { QuotaViewProvider } from "./ui/quotaView";
 import { StatusBar } from "./ui/statusBar";
+import { DashboardPanel } from "./ui/dashboardPanel";
 import { AIRequest, ProviderClient, ProviderId } from "./types";
 
 const OVERRIDE_KEY = "modelHopper.manualOverride";
@@ -53,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
     router = new ProviderRouter(providers, logger);
     statusBar.setManualOverride(context.globalState.get<ProviderId | undefined>(OVERRIDE_KEY));
     quotaView.refresh();
+    DashboardPanel.refreshIfOpen();
   };
 
   await loadProviders();
@@ -81,12 +83,19 @@ export async function activate(context: vscode.ExtensionContext) {
       }
       await context.globalState.update(OVERRIDE_KEY, pick.id);
       statusBar.setManualOverride(pick.id);
+      DashboardPanel.refreshIfOpen();
       if (pick.id) {
         logger.info(`Manual override set to ${pick.id}.`);
       } else {
         logger.info("Manual override cleared.");
       }
       quotaView.refresh();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("modelHopper.openDashboard", () => {
+      DashboardPanel.revealOrCreate(providers, () => statusBar.snapshot());
     })
   );
 
@@ -118,6 +127,7 @@ export async function activate(context: vscode.ExtensionContext) {
       const request: AIRequest = { prompt: input };
 
       try {
+        statusBar.setBusy(true);
         const response = await router.routeRequest(request, {
           priorityOrder: config.priorityOrder,
           alertThresholdPercent: config.alertThresholdPercent,
@@ -127,12 +137,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
         statusBar.setActiveProvider(response.provider, response.model);
         quotaView.refresh();
+        DashboardPanel.refreshIfOpen();
         logger.info(`Request handled by ${response.provider}.`);
         vscode.window.showInformationMessage(`Response from ${response.provider}: ${response.text}`);
       } catch (err) {
         const error = err instanceof Error ? err.message : String(err);
         logger.error(`Request failed: ${error}`);
         vscode.window.showErrorMessage(`Model Hopper failed: ${error}`);
+      } finally {
+        statusBar.setBusy(false);
+        DashboardPanel.refreshIfOpen();
       }
     })
   );

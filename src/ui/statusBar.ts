@@ -6,6 +6,7 @@ export class StatusBar {
   private activeProvider?: ProviderId;
   private activeModel?: string;
   private manualOverride?: ProviderId;
+  private busy = false;
 
   constructor() {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -26,15 +27,30 @@ export class StatusBar {
     this.render();
   }
 
+  setBusy(busy: boolean) {
+    this.busy = busy;
+    this.render();
+  }
+
+  snapshot() {
+    return {
+      activeProvider: this.activeProvider,
+      activeModel: this.activeModel,
+      manualOverride: this.manualOverride,
+      busy: this.busy
+    };
+  }
+
   private render() {
+    const busyPrefix = this.busy ? "$(sync~spin) " : "";
     if (!this.activeProvider) {
       const overrideLabel = this.manualOverride ? ` | override: ${this.manualOverride}` : "";
-      this.item.text = `Model Hopper: Idle${overrideLabel}`;
+      this.item.text = `${busyPrefix}Model Hopper: Idle${overrideLabel}`;
       return;
     }
     const modelSuffix = this.activeModel ? ` (${this.activeModel})` : "";
     const overrideSuffix = this.manualOverride ? ` | override: ${this.manualOverride}` : "";
-    this.item.text = `Model Hopper: ${this.activeProvider}${modelSuffix}${overrideSuffix}`;
+    this.item.text = `${busyPrefix}Model Hopper: ${this.activeProvider}${modelSuffix}${overrideSuffix}`;
   }
 
   dispose() {

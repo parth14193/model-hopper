@@ -30,13 +30,20 @@ class QuotaItem extends vscode.TreeItem {
   constructor(label: string, state?: QuotaState, isConfigured = true) {
     super(label, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "quotaItem";
+    this.command = {
+      command: "modelHopper.openDashboard",
+      title: "Open Model Hopper Dashboard"
+    };
     if (!isConfigured) {
       this.description = "Not configured";
       this.tooltip = "API key is not configured.";
+      this.iconPath = new vscode.ThemeIcon("circle-slash");
       return;
     }
 
-    this.description = state ? `${state.usedPercent}% used` : "Unknown";
+    this.description = state
+      ? `${state.usedPercent}% used | ${state.remainingPercent}% left`
+      : "Unknown";
     this.tooltip = state?.lastError
       ? `Last error: ${state.lastError}`
       : state?.resetAt
@@ -45,6 +52,11 @@ class QuotaItem extends vscode.TreeItem {
 
     if (state?.authFailed) {
       this.description = `${this.description} | Auth failed`;
+      this.iconPath = new vscode.ThemeIcon("error");
+    } else if ((state?.usedPercent ?? 0) >= 90) {
+      this.iconPath = new vscode.ThemeIcon("warning");
+    } else {
+      this.iconPath = new vscode.ThemeIcon("pass");
     }
   }
 }
